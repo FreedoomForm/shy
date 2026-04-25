@@ -6,35 +6,9 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-// Set ffmpeg path for telegram - try multiple methods
+// Set ffmpeg path for telegram - simplified approach
 function getFfmpegPath() {
-  try {
-    // Method 1: Use ffmpeg-static
-    const ffmpegStatic = require('ffmpeg-static');
-    if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
-      return ffmpegStatic;
-    }
-  } catch (e) {
-    console.warn('ffmpeg-static not available:', e.message);
-  }
-  
-  // Method 2: Check in node_modules
-  const nodeModulesPath = path.join(__dirname, '..', 'node_modules', 'ffmpeg-static');
-  try {
-    if (fs.existsSync(nodeModulesPath)) {
-      const platform = process.platform;
-      const arch = process.arch;
-      const ffmpegName = platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
-      const ffmpegPath = path.join(nodeModulesPath, 'bin', platform, arch, ffmpegName);
-      if (fs.existsSync(ffmpegPath)) {
-        return ffmpegPath;
-      }
-    }
-  } catch (e) {
-    console.warn('Could not find ffmpeg in node_modules:', e.message);
-  }
-  
-  // Method 3: Check in resources (for packaged app)
+  // For packaged app, check resources
   if (process.resourcesPath) {
     const resourcesFfmpeg = path.join(process.resourcesPath, 'ffmpeg.exe');
     if (fs.existsSync(resourcesFfmpeg)) {
@@ -42,7 +16,7 @@ function getFfmpegPath() {
     }
   }
   
-  // Method 4: Fallback to system PATH
+  // Fallback to system PATH - user needs ffmpeg installed
   return 'ffmpeg';
 }
 
@@ -407,18 +381,8 @@ class MCPServer {
     try {
       this.onStatus({ connected: true, message: 'Generating AI response...' });
       
-      let aiResponse;
-      
-      // Different AI providers
-      if (this.aiProvider === 'glm') {
-        aiResponse = await this.callGLMAPI(msgData.text);
-      } else if (this.aiProvider === 'openai') {
-        aiResponse = await this.callOpenAIAPI(msgData.text);
-      } else if (this.aiProvider === 'custom') {
-        aiResponse = await this.callCustomAPI(msgData.text);
-      } else {
-        aiResponse = await this.callGLMAPI(msgData.text);
-      }
+      // Use unified API call for all providers (they all follow OpenAI-compatible format)
+      const aiResponse = await this.callAI(msgData.text);
 
       if (aiResponse && this.client && this.isConnected) {
         // Send response
@@ -457,58 +421,29 @@ class MCPServer {
     }
   }
 
-  async callGLMAPI(text) {
-    const response = await axios.post(`${this.aiBaseUrl}/chat/completions`, {
-      model: this.aiModel,
-      messages: [
-        { role: 'system', content: this.systemPrompt },
-        { role: 'user', content: text }
-      ],
-      max_tokens: 500
-    }, {
-      headers: {
-        'Authorization': `Bearer ${this.aiApiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
+  // Unified AI API call - works with all OpenAI-compatible providers
+  async callAI(text) {
+    try {
+      const response = await axios.post(`${this.aiBaseUrl}/chat/completions`, {
+        model: this.aiModel,
+        messages: [
+          { role: 'system', content: this.systemPrompt },
+          { role: 'user', content: text }
+        ],
+        max_tokens: 500
+      }, {
+        headers: {
+          'Authorization': `Bearer ${this.aiApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
 
-    return response.data?.choices?.[0]?.message?.content;
-  }
-
-  async callOpenAIAPI(text) {
-    const response = await axios.post(`${this.aiBaseUrl}/chat/completions`, {
-      model: this.aiModel,
-      messages: [
-        { role: 'system', content: this.systemPrompt },
-        { role: 'user', content: text }
-      ],
-      max_tokens: 500
-    }, {
-      headers: {
-        'Authorization': `Bearer ${this.aiApiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return response.data?.choices?.[0]?.message?.content;
-  }
-
-  async callCustomAPI(text) {
-    const response = await axios.post(`${this.aiBaseUrl}/chat/completions`, {
-      model: this.aiModel,
-      messages: [
-        { role: 'system', content: this.systemPrompt },
-        { role: 'user', content: text }
-      ],
-      max_tokens: 500
-    }, {
-      headers: {
-        'Authorization': `Bearer ${this.aiApiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return response.data?.choices?.[0]?.message?.content;
+      return response.data?.choices?.[0]?.message?.content;
+    } catch (error) {
+      console.error('AI API Error:', error.response?.data || error.message);
+      throw error;
+    }
   }
 
   getStats() {

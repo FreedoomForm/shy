@@ -1,7 +1,12 @@
-const { app, BrowserWindow, ipcMain, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const MCPServer = require('./mcp-server');
+
+// Set app icon for the application
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.telegrammcp.manager');
+}
 
 // Initialize secure storage
 const store = new Store({
@@ -13,6 +18,8 @@ let mainWindow = null;
 const accounts = new Map(); // account_id -> { mcpServer, status }
 
 function createWindow() {
+  const iconPath = path.join(__dirname, 'icon.ico');
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -25,7 +32,7 @@ function createWindow() {
     },
     title: 'Telegram MCP Manager',
     backgroundColor: '#0a0a0f',
-    icon: path.join(__dirname, '..', 'build', 'icon.ico'),
+    icon: iconPath,
     show: false
   });
 

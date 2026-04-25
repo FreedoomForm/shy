@@ -31,7 +31,135 @@ const icons = {
   loader: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
   alertCircle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
   checkCircle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
-  info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
+  info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+  cloud: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>',
+  brain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.54"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.54"/></svg>',
+  gem: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>',
+  rocket: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>',
+  star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  hexagon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>',
+  triangle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.73 4 2 20h20L10.27 4a2 2 0 0 0-3.54 0z"/></svg>'
+};
+
+// AI Providers Configuration with models
+const AI_PROVIDERS = {
+  mistral: {
+    name: 'Mistral AI',
+    desc: 'European AI',
+    icon: 'cloud',
+    baseUrl: 'https://api.mistral.ai/v1',
+    models: [
+      { id: 'mistral-large-latest', name: 'Mistral Large (Latest)', desc: 'Most capable model' },
+      { id: 'mistral-medium-latest', name: 'Mistral Medium (Latest)', desc: 'Balanced performance' },
+      { id: 'mistral-small-latest', name: 'Mistral Small (Latest)', desc: 'Fast & efficient' },
+      { id: 'open-mixtral-8x22b', name: 'Mixtral 8x22B', desc: 'Open source MoE' },
+      { id: 'open-mixtral-8x7b', name: 'Mixtral 8x7B', desc: 'Lightweight MoE' },
+      { id: 'open-mistral-7b', name: 'Mistral 7B', desc: 'Smallest model' },
+      { id: 'codestral-latest', name: 'Codestral', desc: 'Code generation' }
+    ],
+    defaultModel: 'mistral-large-latest',
+    defaultApiKey: 'bz2Mp9E67ep1QfmaHzXBSJaRVOfIkx8v'
+  },
+  openai: {
+    name: 'OpenAI',
+    desc: 'GPT Models',
+    icon: 'sparkles',
+    baseUrl: 'https://api.openai.com/v1',
+    models: [
+      { id: 'gpt-4o', name: 'GPT-4o', desc: 'Latest multimodal' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: 'Fast & affordable' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', desc: 'Enhanced GPT-4' },
+      { id: 'gpt-4', name: 'GPT-4', desc: 'Most capable' },
+      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', desc: 'Fast & efficient' }
+    ],
+    defaultModel: 'gpt-4o'
+  },
+  google: {
+    name: 'Google AI Studio',
+    desc: 'Gemini Models',
+    icon: 'gem',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    models: [
+      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Advanced reasoning' },
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'Fast responses' },
+      { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro', desc: 'General purpose' },
+      { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Exp)', desc: 'Latest experimental' }
+    ],
+    defaultModel: 'gemini-1.5-pro'
+  },
+  anthropic: {
+    name: 'Anthropic',
+    desc: 'Claude Models',
+    icon: 'brain',
+    baseUrl: 'https://api.anthropic.com/v1',
+    models: [
+      { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', desc: 'Latest & best' },
+      { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', desc: 'Fast & efficient' },
+      { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', desc: 'Most powerful' },
+      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', desc: 'Balanced' },
+      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', desc: 'Fastest' }
+    ],
+    defaultModel: 'claude-3-5-sonnet-20241022'
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    desc: 'Chinese AI',
+    icon: 'hexagon',
+    baseUrl: 'https://api.deepseek.com/v1',
+    models: [
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', desc: 'General purpose' },
+      { id: 'deepseek-coder', name: 'DeepSeek Coder', desc: 'Code specialist' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', desc: 'Advanced reasoning' }
+    ],
+    defaultModel: 'deepseek-chat'
+  },
+  glm: {
+    name: 'GLM (智谱)',
+    desc: 'Zhipu AI',
+    icon: 'cpu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    models: [
+      { id: 'glm-4-plus', name: 'GLM-4 Plus', desc: 'Enhanced GLM-4' },
+      { id: 'glm-4', name: 'GLM-4', desc: 'Flagship model' },
+      { id: 'glm-4-air', name: 'GLM-4 Air', desc: 'Cost-effective' },
+      { id: 'glm-4-flash', name: 'GLM-4 Flash', desc: 'Fast inference' },
+      { id: 'glm-4-long', name: 'GLM-4 Long', desc: 'Long context' }
+    ],
+    defaultModel: 'glm-4'
+  },
+  xai: {
+    name: 'xAI',
+    desc: 'Grok Models',
+    icon: 'rocket',
+    baseUrl: 'https://api.x.ai/v1',
+    models: [
+      { id: 'grok-beta', name: 'Grok Beta', desc: 'Early access' },
+      { id: 'grok-2-1212', name: 'Grok 2', desc: 'Latest model' },
+      { id: 'grok-2-vision-1212', name: 'Grok 2 Vision', desc: 'Multimodal' }
+    ],
+    defaultModel: 'grok-beta'
+  },
+  meta: {
+    name: 'Meta AI',
+    desc: 'Llama Models',
+    icon: 'triangle',
+    baseUrl: 'https://api.meta.ai/v1',
+    models: [
+      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', desc: 'Latest instruct' },
+      { id: 'llama-3.2-90b-vision', name: 'Llama 3.2 90B Vision', desc: 'Multimodal' },
+      { id: 'llama-3.2-11b-vision', name: 'Llama 3.2 11B Vision', desc: 'Lightweight multimodal' },
+      { id: 'llama-3.1-405b-instruct', name: 'Llama 3.1 405B', desc: 'Largest model' }
+    ],
+    defaultModel: 'llama-3.3-70b-instruct'
+  },
+  custom: {
+    name: 'Custom',
+    desc: 'Your API',
+    icon: 'globe',
+    baseUrl: '',
+    models: [],
+    defaultModel: ''
+  }
 };
 
 // State
@@ -372,6 +500,7 @@ function renderTabContent() {
 
 function renderOverview(account) {
   const status = connectionStatus[account.id] || { connected: account.connected };
+  const provider = AI_PROVIDERS[account.aiProvider] || AI_PROVIDERS.mistral;
   
   return `
     <div class="card">
@@ -383,8 +512,8 @@ function renderOverview(account) {
           <div class="stat-label">Status</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">${icons.bot}</div>
-          <div class="stat-value">${account.aiProvider?.toUpperCase() || 'GLM'}</div>
+          <div class="stat-icon">${icons[provider.icon] || icons.cpu}</div>
+          <div class="stat-value">${provider.name}</div>
           <div class="stat-label">AI Provider</div>
         </div>
         <div class="stat-card">
@@ -392,6 +521,18 @@ function renderOverview(account) {
           <div class="stat-value">${account.tools?.autoRespond ? 'ON' : 'OFF'}</div>
           <div class="stat-label">Auto-Respond</div>
         </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3 class="card-title">${icons.bot} Current AI Model</h3>
+      <div class="form-group">
+        <label>Provider</label>
+        <input type="text" value="${provider.name}" readonly>
+      </div>
+      <div class="form-group">
+        <label>Model</label>
+        <input type="text" value="${account.aiModel || provider.defaultModel}" readonly>
       </div>
     </div>
     
@@ -482,39 +623,34 @@ function renderTools(account) {
 }
 
 function renderAISettings(account) {
-  const providers = [
-    { id: 'glm', name: 'GLM', desc: 'Zhipu AI', icon: icons.cpu },
-    { id: 'openai', name: 'OpenAI', desc: 'GPT Models', icon: icons.sparkles },
-    { id: 'custom', name: 'Custom', desc: 'Your API', icon: icons.globe }
-  ];
+  const currentProvider = account.aiProvider || 'mistral';
+  const currentModel = account.aiModel || AI_PROVIDERS[currentProvider]?.defaultModel || '';
   
   return `
     <div class="card">
-      <h3 class="card-title">${icons.bot} AI Provider</h3>
+      <h3 class="card-title">${icons.bot} Select AI Provider</h3>
       <div class="ai-provider-grid">
-        ${providers.map(p => `
-          <div class="ai-provider-option ${account.aiProvider === p.id ? 'selected' : ''}" onclick="selectAIProvider('${p.id}')">
-            <div class="ai-provider-icon">${p.icon}</div>
-            <div class="ai-provider-name">${p.name}</div>
-            <div class="ai-provider-desc">${p.desc}</div>
+        ${Object.entries(AI_PROVIDERS).map(([id, provider]) => `
+          <div class="ai-provider-option ${currentProvider === id ? 'selected' : ''}" onclick="selectAIProvider('${id}')">
+            <div class="ai-provider-icon">${icons[provider.icon] || icons.cpu}</div>
+            <div class="ai-provider-name">${provider.name}</div>
+            <div class="ai-provider-desc">${provider.desc}</div>
           </div>
         `).join('')}
       </div>
     </div>
     
+    ${renderModelSelection(account, currentProvider, currentModel)}
+    
     <div class="card">
       <h3 class="card-title">${icons.key} API Configuration</h3>
       <div class="form-group">
         <label>Base URL</label>
-        <input type="text" id="aiBaseUrl" value="${account.aiBaseUrl || ''}" placeholder="https://api.openai.com/v1">
+        <input type="text" id="aiBaseUrl" value="${account.aiBaseUrl || AI_PROVIDERS[currentProvider]?.baseUrl || ''}" placeholder="https://api.example.com/v1">
       </div>
       <div class="form-group">
         <label>API Key</label>
-        <input type="password" id="aiApiKey" value="${account.aiApiKey || ''}" placeholder="sk-...">
-      </div>
-      <div class="form-group">
-        <label>Model</label>
-        <input type="text" id="aiModel" value="${account.aiModel || 'glm-4'}" placeholder="glm-4, gpt-4, etc.">
+        <input type="password" id="aiApiKey" value="${account.aiApiKey || AI_PROVIDERS[currentProvider]?.defaultApiKey || ''}" placeholder="Your API key...">
       </div>
       <button class="btn btn-primary" onclick="saveAIConfig()">${icons.check} Save AI Configuration</button>
     </div>
@@ -528,6 +664,65 @@ function renderAISettings(account) {
       <button class="btn btn-primary" onclick="saveSystemPrompt()">${icons.check} Save Prompt</button>
     </div>
   `;
+}
+
+function renderModelSelection(account, currentProvider, currentModel) {
+  const provider = AI_PROVIDERS[currentProvider];
+  if (!provider || !provider.models || provider.models.length === 0) {
+    return `
+      <div class="card">
+        <h3 class="card-title">${icons.settings} Model Selection</h3>
+        <div class="form-group">
+          <label>Model Name</label>
+          <input type="text" id="aiModel" value="${currentModel}" placeholder="Enter model name">
+        </div>
+      </div>
+    `;
+  }
+  
+  return `
+    <div class="card">
+      <h3 class="card-title">${icons.settings} Select Model</h3>
+      <div class="form-group">
+        <label>Available Models for ${provider.name}</label>
+        <select id="aiModel" onchange="updateModelSelection()">
+          <option value="">-- Select a model --</option>
+          ${provider.models.map(model => `
+            <option value="${model.id}" ${currentModel === model.id ? 'selected' : ''}>
+              ${model.name} - ${model.desc}
+            </option>
+          `).join('')}
+        </select>
+      </div>
+      <div id="modelInfo" style="background: #1a1a2e; border-radius: 8px; padding: 12px; margin-top: 12px;">
+        ${getModelInfo(provider, currentModel)}
+      </div>
+    </div>
+  `;
+}
+
+function getModelInfo(provider, modelId) {
+  const model = provider.models.find(m => m.id === modelId);
+  if (!model) return '<span style="color: #666;">Select a model to see details</span>';
+  return `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <strong style="color: #0088cc;">${model.name}</strong>
+      <span style="color: #666;">|</span>
+      <span style="color: #888;">${model.desc}</span>
+    </div>
+  `;
+}
+
+function updateModelSelection() {
+  const select = document.getElementById('aiModel');
+  const modelId = select.value;
+  const currentProvider = accounts.find(a => a.id === selectedAccountId)?.aiProvider || 'mistral';
+  const provider = AI_PROVIDERS[currentProvider];
+  
+  const infoContainer = document.getElementById('modelInfo');
+  if (infoContainer && provider) {
+    infoContainer.innerHTML = getModelInfo(provider, modelId);
+  }
 }
 
 async function renderMessages() {
@@ -599,27 +794,27 @@ async function updateWakeupTime() {
 // ============== AI Actions ==============
 
 async function selectAIProvider(provider) {
-  const defaults = {
-    glm: { baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4' },
-    openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4' },
-    custom: { baseUrl: '', model: '' }
+  const providerConfig = AI_PROVIDERS[provider];
+  const def = {
+    aiProvider: provider,
+    aiBaseUrl: providerConfig?.baseUrl || '',
+    aiModel: providerConfig?.defaultModel || ''
   };
   
-  const def = defaults[provider] || defaults.glm;
+  // Include default API key if available (for Mistral)
+  if (providerConfig?.defaultApiKey) {
+    def.aiApiKey = providerConfig.defaultApiKey;
+  }
   
-  await window.electronAPI.updateAIConfig(selectedAccountId, {
-    aiProvider: provider,
-    aiBaseUrl: def.baseUrl,
-    aiModel: def.model
-  });
-  
+  await window.electronAPI.updateAIConfig(selectedAccountId, def);
   renderContent();
 }
 
 async function saveAIConfig() {
   const baseUrl = document.getElementById('aiBaseUrl').value;
   const apiKey = document.getElementById('aiApiKey').value;
-  const model = document.getElementById('aiModel').value;
+  const modelSelect = document.getElementById('aiModel');
+  const model = modelSelect ? modelSelect.value : '';
   
   await window.electronAPI.updateAIConfig(selectedAccountId, {
     aiBaseUrl: baseUrl,

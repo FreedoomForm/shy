@@ -89,6 +89,7 @@ ipcMain.handle('add-account', async (event, { name, apiId, apiHash, phone }) => 
   const accountId = Date.now().toString();
   const savedAccounts = store.get('accounts') || [];
   
+  // Mistral AI is now the default provider with pre-configured API key
   const newAccount = {
     id: accountId,
     name,
@@ -96,10 +97,10 @@ ipcMain.handle('add-account', async (event, { name, apiId, apiHash, phone }) => 
     apiHash,
     phone: phone || '',
     systemPrompt: 'You are a helpful Telegram assistant. Respond to messages politely and helpfully.',
-    aiProvider: 'glm',
-    aiBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    aiApiKey: '',
-    aiModel: 'glm-4',
+    aiProvider: 'mistral',
+    aiBaseUrl: 'https://api.mistral.ai/v1',
+    aiApiKey: 'bz2Mp9E67ep1QfmaHzXBSJaRVOfIkx8v',
+    aiModel: 'mistral-large-latest',
     tools: {
       autoRespond: true,
       scheduleWakeup: false,

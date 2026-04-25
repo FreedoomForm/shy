@@ -21,10 +21,15 @@ on:
           - portable
           - all
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     name: Build Windows EXE
     runs-on: windows-latest
+    permissions:
+      contents: write
     
     steps:
       - name: 📥 Checkout repository
@@ -73,6 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-windows
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
     
     steps:
       - name: 📥 Checkout repository
@@ -102,10 +109,9 @@ jobs:
             
             ### Features
             - Runs MCP server locally on your computer
-            - Connects to cloud frontend for remote access
             - Auto-responds to Telegram messages using AI
             - Secure credential storage
-            - System tray integration
+            - Built-in dashboard UI
             - Auto-start on boot option
             
             ### Installation (Installer)
@@ -136,64 +142,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Build for other platforms (optional)
-  build-macos:
-    name: Build macOS App
-    runs-on: macos-latest
-    needs: build-windows
-    if: github.event.inputs.build_type == 'all'
-    
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: 📦 Install dependencies
-        run: npm install
-
-      - name: 🔨 Build macOS App
-        run: npm run build:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 📤 Upload macOS App
-        uses: actions/upload-artifact@v4
-        with:
-          name: telegram-mcp-macos
-          path: dist/*.dmg
-          retention-days: 30
-
-  build-linux:
-    name: Build Linux AppImage
-    runs-on: ubuntu-latest
-    needs: build-windows
-    if: github.event.inputs.build_type == 'all'
-    
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: 📦 Install dependencies
-        run: npm install
-
-      - name: 🔨 Build Linux AppImage
-        run: npm run build:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 📤 Upload Linux App
-        uses: actions/upload-artifact@v4
-        with:
-          name: telegram-mcp-linux
-          path: dist/*.AppImage
-          retention-days: 30

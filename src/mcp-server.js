@@ -6,6 +6,9 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
+// Set ffmpeg path for telegram
+process.env.FFMPEG_PATH = require('ffmpeg-static');
+
 class MCPServer {
   constructor(options) {
     this.accountId = options.accountId;

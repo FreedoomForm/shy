@@ -1,6 +1,6 @@
 {
   "name": "telegram-mcp-manager",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Telegram MCP Manager - Multi-account Telegram automation with AI",
   "main": "src/main.js",
   "scripts": {
@@ -30,7 +30,8 @@
     "files": [
       "src/**/*",
       "node_modules/**/*",
-      "package.json"
+      "package.json",
+      "build/**/*"
     ],
     "win": {
       "target": [
@@ -39,7 +40,8 @@
           "arch": ["x64"]
         }
       ],
-      "signingHashAlgorithms": []
+      "signingHashAlgorithms": [],
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -51,7 +53,9 @@
       "runAfterFinish": true,
       "perMachine": false,
       "allowElevation": true,
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     }
   }
 }

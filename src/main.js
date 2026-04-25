@@ -25,6 +25,7 @@ function createWindow() {
     },
     title: 'Telegram MCP Manager',
     backgroundColor: '#0a0a0f',
+    icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     show: false
   });
 

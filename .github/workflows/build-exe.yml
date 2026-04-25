@@ -1,0 +1,202 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'installer'
+        type: choice
+        options:
+          - installer
+          - portable
+          - all
+
+jobs:
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+        env:
+          npm_config_runtime: electron
+          npm_config_target: 28.0.0
+          npm_config_disturl: https://electronjs.org/headers
+
+      - name: 🔨 Build EXE (Installer)
+        if: github.event.inputs.build_type != 'portable'
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📁 List build artifacts
+        run: dir dist
+        shell: cmd
+
+      - name: 📤 Upload Installer
+        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build_type != 'portable'
+        with:
+          name: telegram-mcp-installer
+          path: dist/*.exe
+          retention-days: 30
+
+      - name: 📤 Upload Portable
+        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build_type == 'portable' || github.event.inputs.build_type == 'all'
+        with:
+          name: telegram-mcp-portable
+          path: dist/*portable.exe
+          retention-days: 30
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build-windows
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: 📝 Get version
+        id: version
+        run: |
+          VERSION=$(cat package.json | jq -r '.version')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
+      - name: 🏷️ Create Release
+        uses: softprops/action-gh-release@v1
+        if: hashFiles('*.exe') != ''
+        with:
+          tag_name: v${{ steps.version.outputs.version }}-${{ steps.version.outputs.date }}
+          name: Telegram MCP Server v${{ steps.version.outputs.version }}
+          body: |
+            ## Telegram MCP Local Server
+            
+            ### Features
+            - Runs MCP server locally on your computer
+            - Connects to cloud frontend for remote access
+            - Auto-responds to Telegram messages using AI
+            - Secure credential storage
+            - System tray integration
+            - Auto-start on boot option
+            
+            ### Installation (Installer)
+            1. Download `Telegram MCP Server Setup X.X.X.exe`
+            2. Run the installer
+            3. Launch the app from Start Menu
+            4. Enter your Telegram API credentials
+            5. Start the server
+            
+            ### Installation (Portable)
+            1. Download `Telegram MCP Server X.X.X Portable.exe`
+            2. Run directly - no installation needed
+            3. Enter your Telegram API credentials
+            4. Start the server
+            
+            ### Get API Credentials
+            Go to https://my.telegram.org to get your API ID and Hash
+            
+            ### Configuration
+            - Enter your Telegram API ID and Hash
+            - Optionally customize the AI system prompt
+            - Enable auto-start if desired
+            - Click "Start Server" to begin
+            
+          files: |
+            *.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build for other platforms (optional)
+  build-macos:
+    name: Build macOS App
+    runs-on: macos-latest
+    needs: build-windows
+    if: github.event.inputs.build_type == 'all'
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Build macOS App
+        run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Upload macOS App
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-mcp-macos
+          path: dist/*.dmg
+          retention-days: 30
+
+  build-linux:
+    name: Build Linux AppImage
+    runs-on: ubuntu-latest
+    needs: build-windows
+    if: github.event.inputs.build_type == 'all'
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Build Linux AppImage
+        run: npm run build:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Upload Linux App
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-mcp-linux
+          path: dist/*.AppImage
+          retention-days: 30

@@ -3,10 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; font-src https://unpkg.com;">
   <title>Telegram MCP Manager</title>
+  <link rel="stylesheet" href="https://unpkg.com/lucide-static@0.321.0/font/lucide.min.css">
   <style>
+    @import url('https://unpkg.com/lucide-static@0.321.0/font/lucide.min.css');
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    /* Lucide Icons Font */
+    @font-face {
+      font-family: 'lucide';
+      src: url('https://unpkg.com/lucide-static@0.321.0/font/lucide.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+    
+    .icon {
+      font-family: 'lucide', sans-serif;
+      font-size: inherit;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    
+    .icon-lg { font-size: 24px; }
+    .icon-xl { font-size: 32px; }
+    .icon-2xl { font-size: 48px; }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -44,7 +67,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      color: #fff;
     }
     
     .logo-text { font-size: 18px; font-weight: 700; color: #0088cc; }
@@ -75,17 +98,20 @@
       margin-bottom: 6px;
     }
     
-    .account-name { font-weight: 600; }
+    .account-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
     
     .account-status {
       font-size: 10px;
       padding: 2px 8px;
       border-radius: 10px;
       background: #666;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
     
     .account-status.connected { background: #00C851; color: #fff; }
-    .account-status.disconnected { background: #ff4444; color: #fff; }
+    .account-status.disconnected { background: #444; color: #fff; }
     
     .account-phone { font-size: 12px; color: #666; }
     
@@ -103,11 +129,15 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     
     .btn-primary { background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%); color: #fff; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,136,204,0.3); }
-    .btn-danger { background: linear-gradient(135deg, #cc0000 0%, #aa0000 100%); color: #fff; }
+    .btn-danger { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; }
     .btn-secondary { background: #2a2a4e; color: #fff; }
     .btn-success { background: linear-gradient(135deg, #00C851 0%, #009944 100%); color: #fff; }
     
@@ -127,9 +157,10 @@
       align-items: center;
     }
     
-    .content-title { font-size: 24px; font-weight: 600; }
+    .content-title { font-size: 24px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
     
     .content-actions { display: flex; gap: 12px; }
+    .content-actions .btn { width: auto; padding: 10px 20px; }
     
     .content-body {
       flex: 1;
@@ -155,6 +186,9 @@
       cursor: pointer;
       font-size: 14px;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .tab:hover { background: #1a1a2e; color: #fff; }
@@ -174,6 +208,9 @@
       font-weight: 600;
       margin-bottom: 16px;
       color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     
     .card-grid {
@@ -189,7 +226,19 @@
       text-align: center;
     }
     
-    .stat-value { font-size: 32px; font-weight: 700; color: #0088cc; }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      color: #fff;
+    }
+    
+    .stat-value { font-size: 28px; font-weight: 700; color: #0088cc; }
     .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
     
     /* Form Elements */
@@ -224,11 +273,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
+      padding: 16px 0;
       border-bottom: 1px solid #2a2a4e;
     }
     
-    .toggle-label { font-size: 14px; }
+    .toggle-info { display: flex; align-items: center; gap: 12px; }
+    .toggle-icon { width: 40px; height: 40px; background: #2a2a4e; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0088cc; }
+    .toggle-label { font-size: 14px; font-weight: 500; }
     .toggle-desc { font-size: 12px; color: #666; margin-top: 2px; }
     
     .toggle-switch {
@@ -289,7 +340,7 @@
       margin-bottom: 8px;
     }
     
-    .message-from { font-weight: 600; color: #0088cc; }
+    .message-from { font-weight: 600; color: #0088cc; display: flex; align-items: center; gap: 6px; }
     .message-time { font-size: 12px; color: #666; }
     .message-text { font-size: 14px; line-height: 1.5; }
     
@@ -303,6 +354,9 @@
       font-size: 12px;
       color: #00C851;
       margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     
     /* Modal */
@@ -313,11 +367,10 @@
       right: 0;
       bottom: 0;
       background: rgba(0,0,0,0.8);
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      display: none;
     }
     
     .modal-overlay.active { display: flex; }
@@ -336,6 +389,9 @@
       font-size: 20px;
       font-weight: 600;
       margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     
     .modal-actions {
@@ -355,7 +411,7 @@
     }
     
     .ai-provider-option {
-      padding: 16px;
+      padding: 20px;
       border-radius: 12px;
       border: 2px solid #2a2a4e;
       background: #1a1a2e;
@@ -367,6 +423,7 @@
     .ai-provider-option:hover { border-color: #0088cc; }
     .ai-provider-option.selected { border-color: #0088cc; background: #1a2a3e; }
     
+    .ai-provider-icon { width: 48px; height: 48px; background: #2a2a4e; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: #0088cc; }
     .ai-provider-name { font-weight: 600; margin-bottom: 4px; }
     .ai-provider-desc { font-size: 12px; color: #666; }
     
@@ -376,7 +433,7 @@
       padding: 60px 20px;
     }
     
-    .empty-icon { font-size: 64px; margin-bottom: 16px; }
+    .empty-icon { width: 80px; height: 80px; background: #1a1a2e; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #0088cc; font-size: 32px; }
     .empty-title { font-size: 24px; margin-bottom: 8px; }
     .empty-desc { color: #666; margin-bottom: 24px; }
     
@@ -398,6 +455,23 @@
     ::-webkit-scrollbar-track { background: #1a1a2e; }
     ::-webkit-scrollbar-thumb { background: #2a2a4e; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #3a3a5e; }
+    
+    /* Input with icon */
+    .input-with-icon {
+      position: relative;
+    }
+    
+    .input-with-icon .icon-prefix {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+    }
+    
+    .input-with-icon input {
+      padding-left: 42px;
+    }
   </style>
 </head>
 <body>
@@ -405,7 +479,13 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo">
-        <div class="logo-icon">📱</div>
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.73 18.9L15.83 3.32a1.5 1.5 0 0 0-2.83 0L7.1 18.9a1.5 1.5 0 0 0 1.42 2l5.48-.2 5.48.2a1.5 1.5 0 0 0 1.42-2z"/>
+            <path d="M12 9v4"/>
+            <path d="M12 17h.01"/>
+          </svg>
+        </div>
         <span class="logo-text">Telegram MCP</span>
       </div>
     </div>
@@ -416,7 +496,10 @@
     
     <div class="sidebar-footer">
       <button class="btn btn-primary" onclick="showAddAccountModal()">
-        + Add Account
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add Account
       </button>
     </div>
   </aside>
@@ -426,7 +509,14 @@
     <div id="mainContent">
       <!-- Dynamic content -->
       <div class="empty-state">
-        <div class="empty-icon">📱</div>
+        <div class="empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M7 7h10"/>
+            <path d="M7 12h10"/>
+            <path d="M7 17h10"/>
+          </svg>
+        </div>
         <div class="empty-title">No Account Selected</div>
         <div class="empty-desc">Add a Telegram account to get started</div>
       </div>
@@ -436,7 +526,14 @@
   <!-- Add Account Modal -->
   <div class="modal-overlay" id="addAccountModal">
     <div class="modal">
-      <h2 class="modal-title">Add Telegram Account</h2>
+      <h2 class="modal-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v8"/>
+          <path d="M8 12h8"/>
+        </svg>
+        Add Telegram Account
+      </h2>
       
       <div class="form-group">
         <label>Account Name</label>
@@ -468,7 +565,13 @@
   <!-- Login Modal -->
   <div class="modal-overlay" id="loginModal">
     <div class="modal">
-      <h2 class="modal-title" id="loginTitle">Login to Telegram</h2>
+      <h2 class="modal-title" id="loginTitle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Login to Telegram
+      </h2>
       
       <div id="phoneStep">
         <div class="form-group">

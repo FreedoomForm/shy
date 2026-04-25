@@ -18,7 +18,7 @@ let tunnelClient = null;
 let isQuitting = false;
 
 // Frontend URL - this connects to the cloud frontend
-const FRONTEND_URL = 'https://your-frontend.vercel.app'; // Replace with actual frontend URL
+const FRONTEND_URL = 'https://mine207.space.z.ai';
 const BACKEND_PORT = 9876;
 
 function createWindow() {

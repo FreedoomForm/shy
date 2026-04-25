@@ -40,13 +40,6 @@
       "node_modules/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "resources",
-        "to": "resources",
-        "filter": ["**/*"]
-      }
-    ],
     "win": {
       "target": [
         {
@@ -57,26 +50,20 @@
           "target": "portable",
           "arch": ["x64"]
         }
-      ],
-      "icon": "resources/icon.ico"
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "resources/icon.ico",
-      "uninstallerIcon": "resources/icon.ico",
-      "installerHeaderIcon": "resources/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Telegram MCP Server"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "resources/icon.icns"
+      "target": "dmg"
     },
     "linux": {
-      "target": "AppImage",
-      "icon": "resources/icon.png"
+      "target": "AppImage"
     }
   }
 }

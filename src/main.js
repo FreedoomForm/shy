@@ -1,6 +1,5 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification } = require('electron');
 const path = require('path');
-const fs = require('fs');
 const Store = require('electron-store');
 const MCPServer = require('./mcp-server');
 const TunnelClient = require('./tunnel-client');
@@ -12,7 +11,6 @@ const store = new Store({
 });
 
 let mainWindow = null;
-let tray = null;
 let mcpServer = null;
 let tunnelClient = null;
 let isQuitting = false;
@@ -32,7 +30,6 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, '../resources/icon.png'),
     title: 'Telegram MCP Server',
     backgroundColor: '#0a0a0f',
     show: false
@@ -44,105 +41,13 @@ function createWindow() {
     mainWindow.show();
   });
 
-  mainWindow.on('close', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      mainWindow.hide();
-    }
-    return false;
+  mainWindow.on('close', () => {
+    isQuitting = true;
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-}
-
-function createTray() {
-  tray = new Tray(path.join(__dirname, '../resources/icon.png'));
-
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Open Dashboard',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      }
-    },
-    {
-      label: 'Server Status',
-      enabled: false,
-      click: () => {}
-    },
-    { type: 'separator' },
-    {
-      label: 'Start Server',
-      click: () => startMCPServer()
-    },
-    {
-      label: 'Stop Server',
-      click: () => stopMCPServer()
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
-      click: () => {
-        isQuitting = true;
-        app.quit();
-      }
-    }
-  ]);
-
-  tray.setToolTip('Telegram MCP Server');
-  tray.setContextMenu(contextMenu);
-
-  tray.on('double-click', () => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
-    }
-  });
-}
-
-function updateTrayStatus(status) {
-  if (!tray) return;
-
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Open Dashboard',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      }
-    },
-    {
-      label: `Status: ${status}`,
-      enabled: false
-    },
-    { type: 'separator' },
-    {
-      label: status === 'Running' ? 'Restart Server' : 'Start Server',
-      click: () => startMCPServer()
-    },
-    {
-      label: 'Stop Server',
-      enabled: status === 'Running',
-      click: () => stopMCPServer()
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
-      click: () => {
-        isQuitting = true;
-        app.quit();
-      }
-    }
-  ]);
-
-  tray.setContextMenu(contextMenu);
 }
 
 async function startMCPServer() {
@@ -155,7 +60,6 @@ async function startMCPServer() {
     }
 
     sendToRenderer('status', { message: 'Starting MCP server...', type: 'info' });
-    updateTrayStatus('Starting...');
 
     // Start local MCP server
     mcpServer = new MCPServer({
@@ -164,10 +68,7 @@ async function startMCPServer() {
       apiHash: config.apiHash,
       systemPrompt: config.systemPrompt || 'You are a helpful assistant.',
       onMessage: (msg) => sendToRenderer('message', msg),
-      onStatus: (status) => {
-        sendToRenderer('status', status);
-        updateTrayStatus(status.message);
-      },
+      onStatus: (status) => sendToRenderer('status', status),
       onError: (err) => sendToRenderer('error', err)
     });
 
@@ -189,20 +90,17 @@ async function startMCPServer() {
     await tunnelClient.connect();
 
     sendToRenderer('status', { message: 'Running', type: 'success' });
-    updateTrayStatus('Running');
     showNotification('Server Started', 'MCP server is running and connected');
 
   } catch (error) {
     console.error('Failed to start MCP server:', error);
     sendToRenderer('error', error.message);
-    updateTrayStatus('Error');
   }
 }
 
 async function stopMCPServer() {
   try {
     sendToRenderer('status', { message: 'Stopping server...', type: 'info' });
-    updateTrayStatus('Stopping...');
 
     if (tunnelClient) {
       await tunnelClient.disconnect();
@@ -215,7 +113,6 @@ async function stopMCPServer() {
     }
 
     sendToRenderer('status', { message: 'Stopped', type: 'warning' });
-    updateTrayStatus('Stopped');
     showNotification('Server Stopped', 'MCP server has been stopped');
 
   } catch (error) {
@@ -232,11 +129,7 @@ function sendToRenderer(channel, data) {
 
 function showNotification(title, body) {
   if (Notification.isSupported()) {
-    const notification = new Notification({
-      title,
-      body,
-      icon: path.join(__dirname, '../resources/icon.png')
-    });
+    const notification = new Notification({ title, body });
     notification.show();
   }
 }
@@ -286,7 +179,6 @@ ipcMain.handle('verify-code', async (event, code) => {
 // App lifecycle
 app.whenReady().then(() => {
   createWindow();
-  createTray();
 
   // Auto-start server if configured
   const config = store.get('telegramConfig');
@@ -295,9 +187,11 @@ app.whenReady().then(() => {
   }
 });
 
-app.on('window-all-closed', (event) => {
-  // Prevent app from closing - minimize to tray
-  event.preventDefault();
+app.on('window-all-closed', () => {
+  // Quit when all windows are closed
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 app.on('before-quit', async () => {

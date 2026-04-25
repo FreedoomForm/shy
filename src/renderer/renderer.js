@@ -818,12 +818,24 @@ async function renderMessages() {
 
 async function toggleTool(tool, enabled) {
   await window.electronAPI.toggleTool(selectedAccountId, tool, enabled);
+  // Reload accounts to get updated data
+  await loadAccounts();
+  showSuccessToast(`${tool} ${enabled ? 'enabled' : 'disabled'}`);
 }
 
 async function updateWakeupTime() {
   const time = document.getElementById('wakeupTime').value;
-  const interval = parseInt(document.getElementById('wakeupInterval').value);
+  const interval = parseInt(document.getElementById('wakeupInterval').value) || 5;
+  
+  if (!time) {
+    alert('Please select a valid time');
+    return;
+  }
+  
   await window.electronAPI.setWakeupTime(selectedAccountId, time, interval);
+  // Reload accounts to get updated data
+  await loadAccounts();
+  showSuccessToast(`Wakeup time set to ${time}`);
 }
 
 // ============== AI Actions ==============

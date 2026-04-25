@@ -27,15 +27,15 @@ process.env.FFMPEG_PATH = ffmpegPath;
 class MCPServer {
   constructor(options) {
     this.accountId = options.accountId;
-    this.apiId = options.apiId;
+    this.apiId = parseInt(options.apiId);
     this.apiHash = options.apiHash;
-    this.systemPrompt = options.systemPrompt || 'You are a helpful assistant.';
+    this.systemPrompt = options.systemPrompt || 'You are a helpful Telegram assistant. Respond to messages politely and helpfully.';
     
     // AI Configuration
-    this.aiProvider = options.aiProvider || 'glm';
-    this.aiBaseUrl = options.aiBaseUrl || 'https://open.bigmodel.cn/api/paas/v4';
+    this.aiProvider = options.aiProvider || 'mistral';
+    this.aiBaseUrl = options.aiBaseUrl || 'https://api.mistral.ai/v1';
     this.aiApiKey = options.aiApiKey || '';
-    this.aiModel = options.aiModel || 'glm-4';
+    this.aiModel = options.aiModel || 'mistral-large-latest';
     
     // Tools
     this.tools = options.tools || {
@@ -64,6 +64,7 @@ class MCPServer {
       startTime: null
     };
     this.wakeupTimer = null;
+    this.me = null;
     
     this.loadSession();
   }
@@ -74,6 +75,7 @@ class MCPServer {
         const sessionString = fs.readFileSync(this.sessionPath, 'utf8').trim();
         if (sessionString) {
           this.stringSession = new StringSession(sessionString);
+          console.log('Session loaded from file');
         }
       }
     } catch (error) {
@@ -88,27 +90,32 @@ class MCPServer {
         fs.mkdirSync(dir, { recursive: true });
       }
       fs.writeFileSync(this.sessionPath, this.stringSession.save());
+      console.log('Session saved');
     } catch (error) {
       console.error('Failed to save session:', error);
     }
   }
 
   updateConfig(config) {
-    if (config.systemPrompt) this.systemPrompt = config.systemPrompt;
-    if (config.aiProvider) this.aiProvider = config.aiProvider;
-    if (config.aiBaseUrl) this.aiBaseUrl = config.aiBaseUrl;
-    if (config.aiApiKey) this.aiApiKey = config.aiApiKey;
-    if (config.aiModel) this.aiModel = config.aiModel;
+    if (config.systemPrompt !== undefined) this.systemPrompt = config.systemPrompt;
+    if (config.aiProvider !== undefined) this.aiProvider = config.aiProvider;
+    if (config.aiBaseUrl !== undefined) this.aiBaseUrl = config.aiBaseUrl;
+    if (config.aiApiKey !== undefined) this.aiApiKey = config.aiApiKey;
+    if (config.aiModel !== undefined) this.aiModel = config.aiModel;
+    console.log('Config updated:', { provider: this.aiProvider, model: this.aiModel });
   }
 
   updateTools(tools) {
     this.tools = { ...this.tools, ...tools };
+    console.log('Tools updated:', this.tools);
     
     // Handle wakeup scheduling
-    if (tools.scheduleWakeup) {
-      this.setupWakeupTimer();
-    } else {
-      this.clearWakeupTimer();
+    if (tools.scheduleWakeup !== undefined) {
+      if (tools.scheduleWakeup) {
+        this.setupWakeupTimer();
+      } else {
+        this.clearWakeupTimer();
+      }
     }
   }
 
@@ -117,7 +124,7 @@ class MCPServer {
     
     if (!this.tools.scheduleWakeup) return;
     
-    const [hours, minutes] = this.tools.wakeupTime.split(':').map(Number);
+    const [hours, minutes] = (this.tools.wakeupTime || '09:00').split(':').map(Number);
     const now = new Date();
     const wakeupDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
     
@@ -128,10 +135,12 @@ class MCPServer {
     const delay = wakeupDate - now;
     
     this.wakeupTimer = setTimeout(async () => {
+      console.log('Wakeup timer triggered');
       await this.processUnreadMessages();
       this.setupWakeupTimer(); // Schedule next
     }, delay);
     
+    console.log(`Wakeup scheduled for ${this.tools.wakeupTime} (in ${Math.round(delay/60000)} minutes)`);
     this.onStatus({ 
       connected: true, 
       message: `Wakeup scheduled for ${this.tools.wakeupTime}` 
@@ -150,11 +159,14 @@ class MCPServer {
 
     this.client = new TelegramClient(this.stringSession, this.apiId, this.apiHash, {
       connectionRetries: 5,
-      useWSS: false
+      useWSS: false,
+      autoReconnect: true
     });
 
     try {
+      console.log('Connecting to Telegram...');
       await this.client.connect();
+      console.log('Connected to Telegram server');
       
       if (!await this.client.isUserAuthorized()) {
         this.onStatus({ connected: false, message: 'Login required', needLogin: true });
@@ -165,8 +177,16 @@ class MCPServer {
       this.stats.startTime = Date.now();
       this.saveSession();
       
-      // Set up message handler
-      this.client.addEventHandler(this.handleNewMessage.bind(this), new NewMessage({}));
+      // Get current user info
+      this.me = await this.client.getMe();
+      console.log('Logged in as:', this.me.firstName || this.me.username);
+      
+      // Set up message handler with proper filter
+      this.client.addEventHandler(
+        this.handleNewMessage.bind(this), 
+        new NewMessage({ incoming: true, outgoing: false })
+      );
+      console.log('Message handler registered');
       
       // Load chats
       await this.loadChats();
@@ -176,16 +196,16 @@ class MCPServer {
         this.setupWakeupTimer();
       }
       
-      const me = await this.client.getMe();
       this.onStatus({ 
         connected: true, 
-        message: `Connected as ${me.firstName || me.username}`,
-        user: { name: me.firstName, username: me.username }
+        message: `Connected as ${this.me.firstName || this.me.username}`,
+        user: { name: this.me.firstName, username: this.me.username }
       });
       
       return { success: true };
       
     } catch (error) {
+      console.error('Connection error:', error);
       this.onError(error.message);
       this.onStatus({ connected: false, message: `Error: ${error.message}` });
       throw error;
@@ -198,6 +218,7 @@ class MCPServer {
     if (this.client) {
       try {
         await this.client.disconnect();
+        console.log('Disconnected from Telegram');
       } catch (e) {
         console.error('Disconnect error:', e);
       }
@@ -219,6 +240,7 @@ class MCPServer {
         isGroup: d.isGroup,
         isChannel: d.isChannel
       }));
+      console.log(`Loaded ${this.chats.length} chats`);
     } catch (error) {
       console.error('Failed to load chats:', error);
     }
@@ -249,6 +271,7 @@ class MCPServer {
       
       return { success: true, phoneCodeHash: result.phoneCodeHash };
     } catch (error) {
+      console.error('Send code error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -267,21 +290,25 @@ class MCPServer {
       this.saveSession();
       
       // Set up message handler
-      this.client.addEventHandler(this.handleNewMessage.bind(this), new NewMessage({}));
+      this.client.addEventHandler(
+        this.handleNewMessage.bind(this), 
+        new NewMessage({ incoming: true, outgoing: false })
+      );
       
       // Load chats
       await this.loadChats();
       
-      const me = await this.client.getMe();
+      this.me = await this.client.getMe();
       this.onStatus({ 
         connected: true, 
-        message: `Connected as ${me.firstName || me.username}`,
-        user: { name: me.firstName, username: me.username }
+        message: `Connected as ${this.me.firstName || this.me.username}`,
+        user: { name: this.me.firstName, username: this.me.username }
       });
       
-      return { success: true, user: { name: me.firstName, username: me.username } };
+      return { success: true, user: { name: this.me.firstName, username: this.me.username } };
       
     } catch (error) {
+      console.error('Verify code error:', error);
       if (error.message.includes('SESSION_PASSWORD_NEEDED')) {
         this.onStatus({ connected: false, message: '2FA password required', needPassword: true });
         return { success: false, needPassword: true };
@@ -294,6 +321,12 @@ class MCPServer {
     try {
       const message = event.message;
       
+      console.log('Received message event:', {
+        id: message.id,
+        out: message.out,
+        hasText: !!(message.message || message.text)
+      });
+      
       // Skip outgoing messages
       if (message.out) return;
       
@@ -303,9 +336,12 @@ class MCPServer {
       const sender = await message.getSender();
       const chat = await message.getChat();
 
+      // Get proper chat ID
+      const chatId = chat?.id || message.chatId || message.peerId;
+      
       const msgData = {
         id: message.id?.toString(),
-        chatId: chat?.id?.toString() || message.chatId?.toString(),
+        chatId: chatId?.toString(),
         chatName: chat?.title || chat?.firstName || chat?.username || 'Unknown',
         from: sender?.firstName || sender?.username || 'Unknown',
         fromId: sender?.id?.toString(),
@@ -315,6 +351,12 @@ class MCPServer {
         isOut: false,
         aiResponse: null
       };
+
+      console.log('Processed message:', {
+        from: msgData.from,
+        chat: msgData.chatName,
+        text: msgData.text.substring(0, 50) + '...'
+      });
 
       this.messages.push(msgData);
       this.stats.messagesReceived++;
@@ -328,11 +370,13 @@ class MCPServer {
 
       // Auto-respond if enabled
       if (this.tools.autoRespond) {
+        console.log('Auto-respond enabled, generating response...');
         await this.generateAndSendResponse(msgData);
       }
 
     } catch (error) {
       console.error('Error handling message:', error);
+      this.onError(error.message);
     }
   }
 
@@ -342,9 +386,10 @@ class MCPServer {
       
       for (const chat of this.chats) {
         if (chat.unread > 0) {
+          console.log(`Processing ${chat.unread} unread messages from ${chat.name}`);
+          
           const messages = await this.client.getMessages(chat.id, { 
-            limit: chat.unread,
-            filter: { _: 'inputMessagesFilterEmpty' }
+            limit: chat.unread
           });
           
           for (const msg of messages) {
@@ -381,15 +426,40 @@ class MCPServer {
     try {
       this.onStatus({ connected: true, message: 'Generating AI response...' });
       
-      // Use unified API call for all providers (they all follow OpenAI-compatible format)
+      console.log('Calling AI API with:', {
+        provider: this.aiProvider,
+        model: this.aiModel,
+        baseUrl: this.aiBaseUrl,
+        hasApiKey: !!this.aiApiKey
+      });
+      
+      // Use unified API call for all providers
       const aiResponse = await this.callAI(msgData.text);
+      
+      console.log('AI response received:', aiResponse ? aiResponse.substring(0, 50) + '...' : 'null');
 
       if (aiResponse && this.client && this.isConnected) {
+        // Convert chatId to proper BigInt format for Telegram
+        let targetChatId = msgData.chatId;
+        
+        // Handle different chat ID formats
+        if (typeof targetChatId === 'string') {
+          // Remove any non-numeric characters except minus sign
+          const cleanId = targetChatId.replace(/[^0-9-]/g, '');
+          if (cleanId) {
+            targetChatId = BigInt(cleanId);
+          }
+        }
+        
+        console.log('Sending message to chat:', targetChatId.toString());
+        
         // Send response
-        await this.client.sendMessage(msgData.chatId, { message: aiResponse });
+        await this.client.sendMessage(targetChatId, { message: aiResponse });
         
         this.stats.messagesSent++;
         this.stats.aiResponses++;
+        
+        console.log('Message sent successfully');
         
         // Record the AI response
         const responseMsgData = {
@@ -411,27 +481,44 @@ class MCPServer {
         msgData.aiResponse = aiResponse;
         
         this.onMessage(responseMsgData);
+        this.onStatus({ connected: true, message: 'Connected' });
+      } else {
+        console.log('Cannot send message: aiResponse=', !!aiResponse, 'client=', !!this.client, 'connected=', this.isConnected);
+        this.onStatus({ connected: true, message: 'AI returned empty response' });
       }
       
-      this.onStatus({ connected: true, message: 'Connected' });
-      
     } catch (error) {
-      console.error('Error generating response:', error);
-      this.onStatus({ connected: true, message: `AI Error: ${error.message}` });
+      console.error('Error generating/sending response:', error);
+      this.onStatus({ connected: true, message: `Error: ${error.message}` });
+      this.onError(error.message);
     }
   }
 
   // Unified AI API call - works with all OpenAI-compatible providers
   async callAI(text) {
     try {
-      const response = await axios.post(`${this.aiBaseUrl}/chat/completions`, {
+      if (!this.aiApiKey) {
+        throw new Error('AI API key not configured. Please set your API key in AI Settings.');
+      }
+      
+      if (!this.aiBaseUrl) {
+        throw new Error('AI Base URL not configured. Please set it in AI Settings.');
+      }
+      
+      const url = `${this.aiBaseUrl}/chat/completions`;
+      console.log('Calling AI API:', url);
+      
+      const requestBody = {
         model: this.aiModel,
         messages: [
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: text }
         ],
-        max_tokens: 500
-      }, {
+        max_tokens: 500,
+        temperature: 0.7
+      };
+      
+      const response = await axios.post(url, requestBody, {
         headers: {
           'Authorization': `Bearer ${this.aiApiKey}`,
           'Content-Type': 'application/json'
@@ -439,9 +526,21 @@ class MCPServer {
         timeout: 30000
       });
 
-      return response.data?.choices?.[0]?.message?.content;
+      const content = response.data?.choices?.[0]?.message?.content;
+      
+      if (!content) {
+        console.error('Unexpected AI response format:', response.data);
+        throw new Error('Invalid AI response format');
+      }
+      
+      return content.trim();
+      
     } catch (error) {
-      console.error('AI API Error:', error.response?.data || error.message);
+      console.error('AI API Error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       throw error;
     }
   }

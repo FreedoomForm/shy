@@ -1,192 +1,169 @@
-# Telegram MCP Local Server
+# Telegram MCP Manager
 
-Windows application that runs the MCP (Model Context Protocol) server locally on your computer and connects to a cloud-hosted frontend.
+Complete desktop application for managing multiple Telegram accounts with AI auto-respond capabilities.
 
 ## Features
 
-- 🖥️ **Local Server**: Runs entirely on your computer
-- ☁️ **Cloud Frontend**: Connects to web frontend for remote access
-- 🤖 **AI Auto-Responder**: Automatically responds to Telegram messages using GLM AI
-- 🔐 **Secure Storage**: Credentials stored encrypted on your device
-- 📊 **Dashboard UI**: Monitor messages, stats, and server status
-- 🔄 **Auto-Start**: Option to start automatically on boot
-- 📌 **System Tray**: Runs in background, accessible from tray
+### 📱 Multi-Account Management
+- Add unlimited Telegram accounts
+- Monitor all accounts from one dashboard
+- Individual settings per account
+
+### 🤖 AI Integration
+- **GLM-4** (default) - Zhipu AI
+- **OpenAI** - GPT models
+- **Custom** - Any OpenAI-compatible API
+- Configure base URL and API key
+- Customize system prompt per account
+
+### ⚙️ Tool Controls
+- **Auto-Respond** - Toggle on/off
+- **Schedule Wakeup** - Set time for AI to process unread messages
+- Check interval configuration
+
+### 📊 Monitoring
+- View all messages per account
+- See AI responses for each message
+- Track connected status
+
+## Installation
+
+1. Download `Telegram MCP Manager Setup.exe`
+2. Run the installer
+3. Launch from Start Menu
+
+## Setup
+
+### 1. Get Telegram API Credentials
+1. Go to https://my.telegram.org
+2. Login with your phone number
+3. Go to "API development tools"
+4. Create a new application
+5. Copy API ID and API Hash
+
+### 2. Add Account
+1. Click "Add Account"
+2. Enter account name (any name you want)
+3. Enter API ID and API Hash
+4. Click "Add"
+
+### 3. Connect & Login
+1. Select the account
+2. Click "Connect"
+3. Enter phone number when prompted
+4. Enter verification code from Telegram
+
+### 4. Configure AI
+1. Go to "AI Settings" tab
+2. Select AI provider (GLM, OpenAI, or Custom)
+3. Enter API key
+4. Customize system prompt
+5. Save configuration
+
+### 5. Enable Tools
+1. Go to "Tools" tab
+2. Toggle "Auto-Respond" to enable AI responses
+3. Optionally enable "Schedule Wakeup"
+
+## Configuration
+
+### AI Providers
+
+| Provider | Base URL | Models |
+|----------|----------|--------|
+| GLM | https://open.bigmodel.cn/api/paas/v4 | glm-4, glm-4-flash |
+| OpenAI | https://api.openai.com/v1 | gpt-4, gpt-3.5-turbo |
+| Custom | Your URL | Any model |
+
+### System Prompt Examples
+
+**Professional Assistant:**
+```
+You are a professional assistant. Respond politely and concisely. 
+Help users with their queries in a professional manner.
+```
+
+**Friendly Helper:**
+```
+You are a friendly and helpful assistant. Be casual but helpful.
+Use emojis occasionally to make responses more engaging.
+```
+
+**Business Bot:**
+```
+You represent a business. Be professional and informative.
+Direct users to contact support for complex issues.
+```
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     YOUR COMPUTER                            │
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │              Telegram MCP Server (EXE)                  │ │
-│  │                                                         │ │
-│  │  ┌─────────────────┐    ┌─────────────────────────┐    │ │
-│  │  │   Electron UI   │    │   MCP Backend Server    │    │ │
-│  │  │   (Dashboard)   │◄──►│   - Telegram Client     │    │ │
-│  │  │                 │    │   - AI Integration      │    │ │
-│  │  │                 │    │   - Message Handler     │    │ │
-│  │  └─────────────────┘    └─────────────────────────┘    │ │
-│  │                                  │                      │ │
-│  │                                  │ Tunnel Connection    │ │
-│  └──────────────────────────────────┼──────────────────────┘ │
-│                                     │                        │
-└─────────────────────────────────────┼────────────────────────┘
-                                      │
-                                      ▼ WebSocket/HTTP
-┌─────────────────────────────────────────────────────────────┐
-│                    CLOUD FRONTEND                            │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │                  Web Dashboard                           ││
-│  │   - View messages                                        ││
-│  │   - Configure settings                                   ││
-│  │   - Monitor server status                                ││
-│  └─────────────────────────────────────────────────────────┘│
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │                  Tunnel Server                           ││
-│  │   - Accept connections from local servers                ││
-│  │   - Forward requests to connected servers                ││
-│  └─────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│              Telegram MCP Manager (EXE)                 │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │  Account 1  │  │  Account 2  │  │  Account N  │    │
+│  │             │  │             │  │             │    │
+│  │ ┌─────────┐ │  │ ┌─────────┐ │  │ ┌─────────┐ │    │
+│  │ │Telegram │ │  │ │Telegram │ │  │ │Telegram │ │    │
+│  │ │ Client  │ │  │ │ Client  │ │  │ │ Client  │ │    │
+│  │ └─────────┘ │  │ └─────────┘ │  │ └─────────┘ │    │
+│  │      ↓      │  │      ↓      │  │      ↓      │    │
+│  │ ┌─────────┐ │  │ ┌─────────┐ │  │ ┌─────────┐ │    │
+│  │ │   AI    │ │  │ │   AI    │ │  │ │   AI    │ │    │
+│  │ │ Engine  │ │  │ │ Engine  │ │  │ │ Engine  │ │    │
+│  │ └─────────┘ │  │ └─────────┘ │  │ └─────────┘ │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘    │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Dashboard UI                        │   │
+│  │  - Account list  - Tool controls                │   │
+│  │  - Messages      - AI settings                  │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
 ```
-
-## Installation
-
-### Download EXE
-
-1. Go to the [Releases](https://github.com/FreedoomForm/shy/releases) page
-2. Download the latest installer or portable version
-3. Run the installer (or portable EXE directly)
-4. Launch the application
-
-### Get Telegram API Credentials
-
-1. Go to https://my.telegram.org
-2. Log in with your phone number
-3. Go to "API development tools"
-4. Create a new application
-5. Copy the `api_id` and `api_hash`
-
-### Configure & Start
-
-1. Open the application
-2. Enter your Telegram API ID and Hash
-3. Optionally customize the system prompt for AI responses
-4. Click "Start Server"
-5. Follow the prompts to log in to Telegram
 
 ## Building from Source
 
-### Prerequisites
-
-- Node.js 20+
-- npm or yarn
-
-### Build Steps
-
 ```bash
-# Clone the repository
+# Clone
 git clone https://github.com/FreedoomForm/shy.git
 cd shy
 
-# Install dependencies
+# Install
 npm install
 
-# Run in development mode
+# Run dev
 npm start
 
-# Build for Windows
+# Build EXE
 npm run build:win
-
-# Build for macOS
-npm run build:mac
-
-# Build for Linux
-npm run build:linux
 ```
 
-## GitHub Actions
+## Security
 
-The project includes automatic EXE building via GitHub Actions:
-
-- **On push to main**: Triggers a build
-- **Manual dispatch**: Choose installer, portable, or all platforms
-- **Automatic release**: Creates a GitHub release with the EXE
-
-## Configuration
-
-### Environment Variables
-
-The application uses these environment variables (optional):
-
-```env
-ZAI_API_KEY=your_api_key_for_ai
-TELEGRAM_PROXY=your_proxy_url  # Optional proxy
-```
-
-### Settings
-
-Settings are stored in:
-- Windows: `%APPDATA%/telegram-mcp-config.json`
-- macOS: `~/Library/Application Support/telegram-mcp-config.json`
-- Linux: `~/.config/telegram-mcp-config.json`
-
-### Session Data
-
-Telegram session is stored in:
-- Windows: `%USERPROFILE%/.telegram-mcp/session.txt`
-- macOS/Linux: `~/.telegram-mcp/session.txt`
-
-## API Endpoints
-
-The local server exposes these endpoints:
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/status` | GET | Server status and stats |
-| `/start` | POST | Start the MCP service |
-| `/stop` | POST | Stop the MCP service |
-| `/send-phone` | POST | Send phone number for auth |
-| `/verify-code` | POST | Verify authentication code |
-| `/chats` | GET | Get list of chats |
-| `/messages/:chatId` | GET | Get messages from a chat |
-| `/send-message` | POST | Send a message |
+- API credentials stored encrypted locally
+- Session data stored in user directory
+- No data sent to external servers (except AI API)
+- All AI communication uses HTTPS
 
 ## Troubleshooting
 
-### "Failed to connect to Telegram"
-- Check your internet connection
-- Verify your API credentials are correct
-- Try using a VPN if Telegram is blocked in your region
+### "Connection Failed"
+- Check internet connection
+- Verify API credentials are correct
+- Try using a VPN if Telegram is blocked
 
-### "Port already in use"
-- Close any other applications using port 9876
-- Or change the port in the configuration
+### "AI Not Responding"
+- Verify API key is correct
+- Check base URL for your provider
+- Ensure AI provider is accessible
 
-### "Session expired"
-- Delete the session file and re-authenticate
-- Session is stored in `~/.telegram-mcp/session.txt`
-
-### AI not responding
-- Check if the ZAI_API_KEY is set
-- The app will fall back to a simple response if AI is unavailable
-
-## Security Notes
-
-- Your Telegram session is stored locally and encrypted
-- API credentials are stored securely using electron-store with encryption
-- The tunnel connection uses secure WebSocket
-- No data is sent to third-party servers except:
-  - Telegram API (for messaging)
-  - AI API (for generating responses)
+### "Code Not Received"
+- Make sure phone number has country code
+- Check if you already have an active session
+- Try logging out from other Telegram clients
 
 ## License
 
 MIT
-
-## Support
-
-For issues and feature requests, please use the [GitHub Issues](https://github.com/FreedoomForm/shy/issues) page.

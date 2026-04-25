@@ -1,26 +1,38 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose protected methods that allow the renderer process to use
-// ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
-  // Configuration
-  getConfig: () => ipcRenderer.invoke('get-config'),
-  saveConfig: (config) => ipcRenderer.invoke('save-config', config),
-
-  // Server control
-  startServer: () => ipcRenderer.invoke('start-server'),
-  stopServer: () => ipcRenderer.invoke('stop-server'),
-  getStatus: () => ipcRenderer.invoke('get-status'),
-
-  // Authentication
-  sendPhone: (phone) => ipcRenderer.invoke('send-phone', phone),
-  verifyCode: (code) => ipcRenderer.invoke('verify-code', code),
-
-  // Event listeners
-  onStatus: (callback) => ipcRenderer.on('status', (event, data) => callback(data)),
+  // Account Management
+  getAccounts: () => ipcRenderer.invoke('get-accounts'),
+  addAccount: (data) => ipcRenderer.invoke('add-account', data),
+  updateAccount: (data) => ipcRenderer.invoke('update-account', data),
+  deleteAccount: (id) => ipcRenderer.invoke('delete-account', id),
+  
+  // Server Control
+  connectAccount: (id) => ipcRenderer.invoke('connect-account', { id }),
+  disconnectAccount: (id) => ipcRenderer.invoke('disconnect-account', { id }),
+  getAccountStatus: (id) => ipcRenderer.invoke('get-account-status', { id }),
+  
+  // Tool Control
+  toggleTool: (accountId, tool, enabled) => ipcRenderer.invoke('toggle-tool', { accountId, tool, enabled }),
+  setWakeupTime: (accountId, time, interval) => ipcRenderer.invoke('set-wakeup-time', { accountId, time, interval }),
+  
+  // AI Configuration
+  updateAIConfig: (accountId, config) => ipcRenderer.invoke('update-ai-config', { accountId, config }),
+  updateSystemPrompt: (accountId, prompt) => ipcRenderer.invoke('update-system-prompt', { accountId, prompt }),
+  
+  // Messages & Monitoring
+  getMessages: (accountId, limit) => ipcRenderer.invoke('get-messages', { accountId, limit }),
+  getChats: (accountId) => ipcRenderer.invoke('get-chats', { accountId }),
+  
+  // Telegram Login
+  sendPhone: (accountId, phone) => ipcRenderer.invoke('send-phone', { accountId, phone }),
+  verifyCode: (accountId, code) => ipcRenderer.invoke('verify-code', { accountId, code }),
+  
+  // Event Listeners
   onMessage: (callback) => ipcRenderer.on('message', (event, data) => callback(data)),
+  onStatus: (callback) => ipcRenderer.on('status', (event, data) => callback(data)),
   onError: (callback) => ipcRenderer.on('error', (event, data) => callback(data)),
-
+  
   // Remove listeners
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
 });

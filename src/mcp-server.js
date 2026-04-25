@@ -6,8 +6,49 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-// Set ffmpeg path for telegram
-process.env.FFMPEG_PATH = require('ffmpeg-static');
+// Set ffmpeg path for telegram - try multiple methods
+function getFfmpegPath() {
+  try {
+    // Method 1: Use ffmpeg-static
+    const ffmpegStatic = require('ffmpeg-static');
+    if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
+      return ffmpegStatic;
+    }
+  } catch (e) {
+    console.warn('ffmpeg-static not available:', e.message);
+  }
+  
+  // Method 2: Check in node_modules
+  const nodeModulesPath = path.join(__dirname, '..', 'node_modules', 'ffmpeg-static');
+  try {
+    if (fs.existsSync(nodeModulesPath)) {
+      const platform = process.platform;
+      const arch = process.arch;
+      const ffmpegName = platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+      const ffmpegPath = path.join(nodeModulesPath, 'bin', platform, arch, ffmpegName);
+      if (fs.existsSync(ffmpegPath)) {
+        return ffmpegPath;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not find ffmpeg in node_modules:', e.message);
+  }
+  
+  // Method 3: Check in resources (for packaged app)
+  if (process.resourcesPath) {
+    const resourcesFfmpeg = path.join(process.resourcesPath, 'ffmpeg.exe');
+    if (fs.existsSync(resourcesFfmpeg)) {
+      return resourcesFfmpeg;
+    }
+  }
+  
+  // Method 4: Fallback to system PATH
+  return 'ffmpeg';
+}
+
+const ffmpegPath = getFfmpegPath();
+console.log('Using ffmpeg at:', ffmpegPath);
+process.env.FFMPEG_PATH = ffmpegPath;
 
 class MCPServer {
   constructor(options) {

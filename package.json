@@ -1,6 +1,6 @@
 {
   "name": "telegram-mcp-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Telegram MCP Manager - Multi-account Telegram automation with AI",
   "main": "src/main.js",
   "scripts": {
@@ -46,7 +46,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Telegram MCP Manager"
+      "shortcutName": "Telegram MCP Manager",
+      "deleteAppDataOnUninstall": true,
+      "runAfterFinish": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "include": "build/installer.nsh"
     }
   }
 }

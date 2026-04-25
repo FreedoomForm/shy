@@ -1,11 +1,25 @@
 const { app, BrowserWindow, ipcMain, Notification, nativeImage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const Store = require('electron-store');
 const MCPServer = require('./mcp-server');
 
 // Set app icon for the application
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.telegrammcp.manager');
+}
+
+// Get icon path - works in both development and production
+function getIconPath() {
+  // In production, check resources folder first
+  if (app.isPackaged) {
+    const resourcesIcon = path.join(process.resourcesPath, 'icon.ico');
+    if (fs.existsSync(resourcesIcon)) {
+      return resourcesIcon;
+    }
+  }
+  // Fallback to src folder
+  return path.join(__dirname, 'icon.ico');
 }
 
 // Initialize secure storage
@@ -18,7 +32,8 @@ let mainWindow = null;
 const accounts = new Map(); // account_id -> { mcpServer, status }
 
 function createWindow() {
-  const iconPath = path.join(__dirname, 'icon.ico');
+  const iconPath = getIconPath();
+  console.log('Loading icon from:', iconPath);
   
   mainWindow = new BrowserWindow({
     width: 1200,

@@ -1,6 +1,6 @@
 {
   "name": "telegram-mcp-manager",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Telegram MCP Manager - Multi-account Telegram automation with AI",
   "main": "src/main.js",
   "scripts": {
@@ -20,7 +20,8 @@
     "electron-store": "^8.1.0",
     "input": "^1.0.1",
     "telegram": "^2.22.2",
-    "ffmpeg-static": "^5.2.0"
+    "ffmpeg-static": "^5.2.0",
+    "@signalapp/libsignal-client": "^0.55.0"
   },
   "build": {
     "appId": "com.telegrammcp.manager",
@@ -33,6 +34,12 @@
       "node_modules/**/*",
       "package.json",
       "build/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      }
     ],
     "win": {
       "target": [
@@ -54,9 +61,10 @@
       "runAfterFinish": true,
       "perMachine": false,
       "allowElevation": true,
-      "include": "build/installer.nsh",
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "installerSidebar": "build/icon.bmp",
+      "uninstallerSidebar": "build/icon.bmp"
     }
   }
 }

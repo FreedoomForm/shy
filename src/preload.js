@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addAccount: (data) => ipcRenderer.invoke('add-account', data),
   updateAccount: (data) => ipcRenderer.invoke('update-account', data),
   deleteAccount: (id) => ipcRenderer.invoke('delete-account', id),
+  getDefaultCredentials: () => ipcRenderer.invoke('get-default-credentials'),
   
   // Server Control
   connectAccount: (id) => ipcRenderer.invoke('connect-account', { id }),

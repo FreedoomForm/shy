@@ -200,6 +200,21 @@ function setupEventListeners() {
 
 async function loadAccounts() {
   accounts = await window.electronAPI.getAccounts();
+  
+  // Auto-create default account if no accounts exist
+  if (accounts.length === 0) {
+    const result = await window.electronAPI.addAccount({
+      name: 'Default Account',
+      apiId: '', // Will use defaults from main.js
+      apiHash: '',
+      phone: ''
+    });
+    if (result.success) {
+      accounts = [result.account];
+      showSuccessToast('Default account created with pre-configured settings!');
+    }
+  }
+  
   renderAccountsList();
   
   if (accounts.length > 0 && !selectedAccountId) {
@@ -258,12 +273,21 @@ function updateAccountStatus(accountId, status) {
 
 // ============== Modal Management ==============
 
-function showAddAccountModal() {
+async function showAddAccountModal() {
   document.getElementById('addAccountModal').classList.add('active');
+  
+  // Pre-fill with default credentials
+  try {
+    const defaultCreds = await window.electronAPI.getDefaultCredentials();
+    document.getElementById('newApiId').value = defaultCreds.apiId || '';
+    document.getElementById('newApiHash').value = defaultCreds.apiHash || '';
+  } catch (e) {
+    console.log('Could not load default credentials');
+  }
+  
   document.getElementById('newAccountName').value = '';
-  document.getElementById('newApiId').value = '';
-  document.getElementById('newApiHash').value = '';
   document.getElementById('newPhone').value = '';
+  document.getElementById('newAccountName').focus();
 }
 
 function hideAddAccountModal() {
@@ -652,7 +676,6 @@ function renderAISettings(account) {
         <label>API Key</label>
         <input type="password" id="aiApiKey" value="${account.aiApiKey || AI_PROVIDERS[currentProvider]?.defaultApiKey || ''}" placeholder="Your API key...">
       </div>
-      <button class="btn btn-primary" onclick="saveAIConfig()">${icons.check} Save AI Configuration</button>
     </div>
     
     <div class="card">
@@ -661,7 +684,19 @@ function renderAISettings(account) {
         <label>How AI should respond to messages</label>
         <textarea id="systemPrompt" placeholder="You are a helpful assistant...">${account.systemPrompt || ''}</textarea>
       </div>
-      <button class="btn btn-primary" onclick="saveSystemPrompt()">${icons.check} Save Prompt</button>
+    </div>
+    
+    <!-- Save All Changes Button -->
+    <div class="card" style="background: linear-gradient(135deg, #1a2a3e 0%, #0a1a2e 100%); border: 2px solid #0088cc;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h3 class="card-title" style="margin-bottom: 4px;">${icons.check} Save All Changes</h3>
+          <p style="color: #888; font-size: 13px;">Save all AI settings, model, and system prompt at once</p>
+        </div>
+        <button class="btn btn-primary" onclick="saveAllChanges()" style="width: auto; padding: 14px 32px; font-size: 16px;">
+          ${icons.check} Save All Changes
+        </button>
+      </div>
     </div>
   `;
 }
@@ -829,4 +864,74 @@ async function saveSystemPrompt() {
   const prompt = document.getElementById('systemPrompt').value;
   await window.electronAPI.updateSystemPrompt(selectedAccountId, prompt);
   alert('System prompt saved!');
+}
+
+// Save all changes at once
+async function saveAllChanges() {
+  try {
+    const baseUrl = document.getElementById('aiBaseUrl')?.value || '';
+    const apiKey = document.getElementById('aiApiKey')?.value || '';
+    const modelSelect = document.getElementById('aiModel');
+    const model = modelSelect ? modelSelect.value : '';
+    const prompt = document.getElementById('systemPrompt')?.value || '';
+    
+    // Save AI config
+    await window.electronAPI.updateAIConfig(selectedAccountId, {
+      aiBaseUrl: baseUrl,
+      aiApiKey: apiKey,
+      aiModel: model
+    });
+    
+    // Save system prompt
+    if (prompt) {
+      await window.electronAPI.updateSystemPrompt(selectedAccountId, prompt);
+    }
+    
+    // Show success message
+    showSuccessToast('All changes saved successfully!');
+    
+    // Refresh the display
+    await loadAccounts();
+    renderContent();
+  } catch (error) {
+    alert('Error saving changes: ' + error.message);
+  }
+}
+
+// Show success toast notification
+function showSuccessToast(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: linear-gradient(135deg, #00C851 0%, #009944 100%);
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 20px rgba(0,200,81,0.3);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  toast.innerHTML = `${icons.checkCircle} ${message}`;
+  document.body.appendChild(toast);
+  
+  // Add animation styles
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideIn 0.3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }

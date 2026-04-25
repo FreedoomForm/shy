@@ -28,6 +28,10 @@ const store = new Store({
   name: 'telegram-mcp-config'
 });
 
+// Default API credentials
+const DEFAULT_API_ID = '36244324';
+const DEFAULT_API_HASH = '15657d847ab4b8ae111ade8e2cbca51f';
+
 let mainWindow = null;
 const accounts = new Map(); // account_id -> { mcpServer, status }
 
@@ -77,6 +81,14 @@ function showNotification(title, body) {
 
 // ============== Account Management ==============
 
+// Get default API credentials for UI
+ipcMain.handle('get-default-credentials', async () => {
+  return {
+    apiId: DEFAULT_API_ID,
+    apiHash: DEFAULT_API_HASH
+  };
+});
+
 ipcMain.handle('get-accounts', async () => {
   const savedAccounts = store.get('accounts') || [];
   return savedAccounts.map(acc => ({
@@ -89,12 +101,16 @@ ipcMain.handle('add-account', async (event, { name, apiId, apiHash, phone }) => 
   const accountId = Date.now().toString();
   const savedAccounts = store.get('accounts') || [];
   
+  // Use default credentials if not provided
+  const finalApiId = apiId || DEFAULT_API_ID;
+  const finalApiHash = apiHash || DEFAULT_API_HASH;
+  
   // Mistral AI is now the default provider with pre-configured API key
   const newAccount = {
     id: accountId,
-    name,
-    apiId,
-    apiHash,
+    name: name || 'Default Account',
+    apiId: finalApiId,
+    apiHash: finalApiHash,
     phone: phone || '',
     systemPrompt: 'You are a helpful Telegram assistant. Respond to messages politely and helpfully.',
     aiProvider: 'mistral',
